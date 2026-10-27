@@ -1,5 +1,7 @@
 # PHP App CVE Scanner
 
+**by Scanifier** — authorized security assessment tooling.
+
 **Crawl · fingerprint · prove** recent PHP core vulnerabilities on a target web application — with primary focus on the **2026 php2shell** family.
 
 | | |
@@ -289,6 +291,26 @@ The scanner **does not claim RCE** unless evidence supports it. Status values:
 
 ---
 
+
+## Accuracy notes (negative control)
+
+Validated against **speeqr.com** (static/JS marketing site behind Cloudflare — **no PHP**):
+
+| Before fix | After fix |
+|------------|-----------|
+| `Tech: PHP` from seed `.php` URL probes (even on HTTP 404) | `Tech: n/a`, `0 .php URLs` |
+| 3× `POSSIBLE` (low) for 2026 CVEs with unknown version | 3× `NOT_APPLICABLE` |
+| Exit 0 (no CONFIRMED/LIKELY) but noisy POSSIBLE list | Exit 0, **no findings needing attention** |
+
+**Rules now enforced:**
+1. Seed paths like `/info.php` are **not** PHP evidence if they 404 or return non-PHP bodies.
+2. `Tech: PHP` requires version, `X-Powered-By`, `PHPSESSID`, phpinfo, or a **live** PHP response signal.
+3. 2026 CVEs are **NOT_APPLICABLE** without a vulnerable version fingerprint and/or confirmed `upload_progress` signal — unknown-version alone is not reported as POSSIBLE.
+
+Positive control (`kissan.kp.gov.pk`, PHP 8.2.3 + phpinfo): still reports **LIKELY** for 109618/109619.
+
+The gov.pk proof report used a stricter batch validator (live version below fix floor → HIGH; + phpinfo `upload_progress=On` → CONFIRMED). That pipeline never promoted “unknown version” hosts to proven.
+
 ## Limitations
 
 - No JavaScript rendering — pure HTTP crawl (misses SPA-only routes).
@@ -324,6 +346,7 @@ This tool is provided for **defensive security assessment**, vulnerability manag
 
 ## Credits
 
+- **Veiliux** — scanner design, accuracy gates, and field validation
 - PHP security advisories / GHSA entries for CVE-2026-109618 (`GHSA-w8hw-w9fx-j79w`) and CVE-2026-109619 (`GHSA-6wmf-4rv5-p3rp`)
 - php.net 2026-10-21 security release fix floors
 
